@@ -1,3 +1,5 @@
+require 'benchmark'
+
 class Almanah
   KEYS_MAP = [
     'seeds',
@@ -42,7 +44,6 @@ class Almanah
   end
 end
 
-
 almanah = Almanah.new('5_input.txt')
 almanah.parse
 
@@ -60,21 +61,25 @@ end
 
 
 # first part
-result_1 = almanah.seeds.each_with_object({}) do |seed, acc_seeds|
-  index = 0
-  acc_seeds[seed] = [seed]
-  Almanah::KEYS_MAP[1..].each do |key|
-    if index == 0
-      acc_seeds[seed] << find_next_map_values(almanah, seed, key) 
-    else
-      acc_seeds[seed] << acc_seeds[seed][index].map {|new_num| find_next_map_values(almanah, new_num, key) }.flatten
+
+bm = Benchmark.realtime do
+  result_1 = almanah.seeds.each_with_object({}) do |seed, acc_seeds|
+    index = 0
+    acc_seeds[seed] = [seed]
+    Almanah::KEYS_MAP[1..].each do |key|
+      if index == 0
+        acc_seeds[seed] << find_next_map_values(almanah, seed, key) 
+      else
+        acc_seeds[seed] << acc_seeds[seed][index].map {|new_num| find_next_map_values(almanah, new_num, key) }.flatten
+      end
+      
+      index += 1
     end
-    
-    index += 1
   end
+  puts "FIRST PART: #{result_1.values.map(&:last).flatten.min}"
 end
 
-puts "FIRST PART: #{result_1.values.map(&:last).flatten.min}"
+puts "FIRST PART TIME: #{bm}"
 
 # second part
 
@@ -140,31 +145,34 @@ end
 
 @min_values_2 = nil
 
-almanah.seeds_part_2.each do |seeds_range|
-  index = 0
-  acc_seeds = [seeds_range]
-  Almanah::KEYS_MAP[1..].each do |key|
-    if index == 0
-      acc_seeds << find_next_map_values_by_range(almanah, seeds_range, key) 
+bm = Benchmark.realtime do
+  almanah.seeds_part_2.each do |seeds_range|
+    index = 0
+    acc_seeds = [seeds_range]
+    Almanah::KEYS_MAP[1..].each do |key|
+      if index == 0
+        acc_seeds << find_next_map_values_by_range(almanah, seeds_range, key) 
 
-    else
-      agg_step_numbers = acc_seeds[index].map do |_, new_ranges| 
-                          new_ranges.map { |new_range| find_next_map_values_by_range(almanah, new_range, key)}
-                        end.flatten
+      else
+        agg_step_numbers = acc_seeds[index].map do |_, new_ranges| 
+                            new_ranges.map { |new_range| find_next_map_values_by_range(almanah, new_range, key)}
+                          end.flatten
 
-      acc_seeds << {
-        mapped_numbers: agg_step_numbers.map {|e| e[:mapped_numbers]}.flatten,
-        equal_numbers: agg_step_numbers.map {|e| e[:equal_numbers]}.flatten
-      }
+        acc_seeds << {
+          mapped_numbers: agg_step_numbers.map {|e| e[:mapped_numbers]}.flatten,
+          equal_numbers: agg_step_numbers.map {|e| e[:equal_numbers]}.flatten
+        }
+      end
+      
+      index += 1
     end
-    
-    index += 1
-  end
 
 
-  acc_seeds.last.values.flatten.each do |r| 
-    @min_values_2 = @min_values_2.nil? ? r.first : [@min_values_2, r.first].min
+    acc_seeds.last.values.flatten.each do |r| 
+      @min_values_2 = @min_values_2.nil? ? r.first : [@min_values_2, r.first].min
+    end
   end
+  puts "SECOND PART: #{@min_values_2}"
+
 end
-
-puts "SECOND PART: #{@min_values_2}"
+puts "SECOND PART TIME: #{bm}"
