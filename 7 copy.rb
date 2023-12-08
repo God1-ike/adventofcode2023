@@ -33,7 +33,7 @@ class Table
       card.to_i
     end
   end
-  
+
   def hand_type(hand)
     hand_info = hand.each_char.tally
 
