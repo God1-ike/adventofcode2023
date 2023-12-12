@@ -21,8 +21,8 @@ class Parser
     first_spring_index = springs.chars.find_index('#') || springs.size - 1
 
     total = (0..first_spring_index).to_a
-                                  .select { |i| p ;springs[i..] =~/^[#?]{#{first_spring_size}}[\.\?\|]/ }
-                                  .map { |i| counts(springs[(i + first_spring_size + 1)..] || '', next_sprigns_sizes) }
+                                  .select { |i| springs[i...] =~/^[#?]{#{first_spring_size}}[\.\?\|]/ }
+                                  .map { |i| counts(springs[(i + first_spring_size + 1)...] || '', next_sprigns_sizes) }
                                   .sum
     @aggr[[springs, counts]] = total
     total
