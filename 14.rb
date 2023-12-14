@@ -11,14 +11,13 @@ class DataParser
   def initialize
     @data = parse
     @rows_count = @data.count
-    @history = []
   end
 
-  def move(dir)
-    @data = @data.transpose if DIRECTION[dir][:transpose]
-    @data = @data.map(&:reverse) if DIRECTION[dir][:reverse]
+  def move(dir, data)
+    data = data.transpose if DIRECTION[dir][:transpose]
+    data = data.map(&:reverse) if DIRECTION[dir][:reverse]
     
-    @data = @data.map do |col|
+    data = data.map do |col|
               last_empty_i = 0
               i = 0
               col = col.each_with_object([]) do |v, acc|
@@ -47,23 +46,44 @@ class DataParser
               col
             end
 
-    @data = @data.map(&:reverse) if DIRECTION[dir][:reverse]
-    @data = @data.transpose if DIRECTION[dir][:transpose]
+    data = data.map(&:reverse) if DIRECTION[dir][:reverse]
+    data = data.transpose if DIRECTION[dir][:transpose]
 
-    @data
+    data
   end
 
-  def cycle(count)
+  def cycle(count, data)
+    index = 0
 
-    count.times do |i|
-      p i / 1000 if i % 1000 == 0
-      move(:n)
-      move(:w)
-      move(:s)
-      move(:e)
+    history = []
+    last_index = nil
+    count.times do
+      break if index >= count
+      data = run_sycle(data)
+      
+      if history.include? data
+        index_start_cycle = history.index data
+
+        last_index = (count - index_start_cycle) % (index - index_start_cycle) - 1
+        break
+      end
+
+      history << data
+      index += 1
+    end
+
+    (0...last_index).each do |i|
+      data = run_sycle(data)
     end
     
-    @data
+    data
+  end
+
+  def run_sycle(data)
+    data = move(:n, data)
+    data = move(:w, data)
+    data = move(:s, data)
+    data = move(:e, data)
   end
 
   private
@@ -78,19 +98,17 @@ end
 
 parser = DataParser.new
 
-res_1 = parser.move(:n).map.with_index do |row, i|
-                          row.count('O') * (parser.rows_count - i)
-                        end.sum
+res_1 = parser.move(:n, parser.data).map.with_index do |row, i|
+                                      row.count('O') * (parser.rows_count - i)
+                                    end.sum
 
 puts "FIRST PART: #{res_1}"
 
 
 parser = DataParser.new
 
-res_2 = parser.cycle(1000000000).map.with_index do |row, i|
-                          row.count('O') * (parser.rows_count - i)
-                        end.sum
-
-parser.data.each { |e| p e}               
+res_2 = parser.cycle(1_000_000_000, parser.data).map.with_index do |row, i|
+                                                  row.count('O') * (parser.rows_count - i)
+                                                end.sum
 
 puts "SECOND PART: #{res_2}"
